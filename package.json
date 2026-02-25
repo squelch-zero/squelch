@@ -1,0 +1,30 @@
+{
+  "name": "squelch",
+  "version": "0.1.0",
+  "description": "Text noise transforms for the terminal.",
+  "type": "module",
+  "bin": {
+    "squelch": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "tsc"
+  },
+  "keywords": [
+    "cli",
+    "noise",
+    "text",
+    "glitch",
+    "terminal",
+    "creative-coding",
+    "generative"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@squelch-zero/noise": "github:squelch-zero/noise"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}
