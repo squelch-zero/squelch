@@ -1,6 +1,17 @@
 #!/usr/bin/env node
 
-import { noise, createResolver, fill } from '@squelch-zero/noise'
+import {
+  noise, createResolver, fill,
+  GLYPHS, GLYPHS_BOX, GLYPHS_BLOCK, GLYPHS_BRAILLE, GLYPHS_GEOMETRIC,
+} from '@squelch-zero/noise'
+
+const POOLS: Record<string, string> = {
+  curated: GLYPHS,
+  box: GLYPHS_BOX,
+  block: GLYPHS_BLOCK,
+  braille: GLYPHS_BRAILLE,
+  geometric: GLYPHS_GEOMETRIC,
+}
 
 const HELP = `squelch — text noise transforms for the terminal
 
@@ -13,20 +24,30 @@ Usage:
 Options:
   -t, --threshold <0-1>   Signal threshold for noise (default: 0.3)
   -d, --duration <secs>   Animation duration (default: 3)
+  -p, --pool <name|chars> Glyph pool for noise characters (default: curated)
   -h, --help              Show this help
+
+Pools:
+  curated     Default — box-drawing, shades, shapes. Reads as degradation.
+  box         Box-drawing characters. Structural, architectural.
+  block       Block elements and shades. Dense, heavy. Reads as censorship.
+  braille     Braille dot patterns. Fine, delicate. Reads as fog.
+  geometric   Geometric shapes. Bold, varied. Reads as interference.
+  <chars>     Any string of characters to use as the glyph pool.
 
 Text is read from stdin if not provided as an argument.
 
   echo "hello world" | squelch noise
-  echo "signal in the noise" | squelch resolve -d 5
-  squelch decay "everything dissolves" -d 4
-  squelch fill 80`
+  echo "signal in the noise" | squelch resolve -d 5 --pool braille
+  squelch decay "everything dissolves" -d 4 -p block
+  squelch fill 80 -p geometric`
 
 interface Args {
   command?: string
   text?: string
   threshold: number
   duration: number
+  pool: string
   help: boolean
 }
 
@@ -34,6 +55,7 @@ function parseArgs(argv: string[]): Args {
   const args: Args = {
     threshold: 0.3,
     duration: 3,
+    pool: GLYPHS,
     help: false,
   }
 
@@ -47,6 +69,9 @@ function parseArgs(argv: string[]): Args {
       args.threshold = parseFloat(argv[++i])
     } else if (arg === '-d' || arg === '--duration') {
       args.duration = parseFloat(argv[++i])
+    } else if (arg === '-p' || arg === '--pool') {
+      const value = argv[++i]
+      args.pool = POOLS[value] ?? value
     } else if (!arg.startsWith('-')) {
       positional.push(arg)
     }
@@ -139,7 +164,7 @@ async function main() {
 
   if (args.command === 'fill') {
     const length = text ? parseInt(text) || 40 : 40
-    console.log(fill(length))
+    console.log(fill(length, args.pool))
     return
   }
 
@@ -150,16 +175,16 @@ async function main() {
 
   switch (args.command) {
     case 'noise': {
-      console.log(noise(text, args.threshold))
+      console.log(noise(text, args.threshold, args.pool))
       break
     }
     case 'resolve': {
-      const resolver = createResolver(text)
+      const resolver = createResolver(text, args.pool)
       await animate(resolver, args.duration * 1000)
       break
     }
     case 'decay': {
-      const resolver = createResolver(text)
+      const resolver = createResolver(text, args.pool)
       await animate(resolver, args.duration * 1000, true)
       break
     }
